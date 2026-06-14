@@ -30,7 +30,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 /portfolio
 
 /history
-
+/my id 
 /add COIN JUMLAH
 /remove COIN JUMLAH
 """
@@ -255,6 +255,10 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(pesan)
 
+async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    await update.message.reply_text(f"User ID kamu: {user_id}")
+
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
@@ -269,6 +273,7 @@ app.add_handler(CommandHandler("portfolio", portfolio))
 app.add_handler(CommandHandler("add", add))
 app.add_handler(CommandHandler("remove", remove))
 app.add_handler(CommandHandler("history", history))
+app.add_handler(CommandHandler("myid", myid))
 print("Bot sedang berjalan...")
 
 app.run_polling()
