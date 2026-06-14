@@ -3,6 +3,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import requests
 import os
 import sqlite3
+from datetime import datetime
 
 TOKEN = "8821027234:AAEKA97j1CWGX9lg1uq8jlY3kOgryBcn2AE"
 
@@ -27,6 +28,8 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 /market
 /portfolio
+
+/history
 
 /add COIN JUMLAH
 /remove COIN JUMLAH
@@ -174,6 +177,16 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
             (jumlah, coin)
         )
 
+        cursor.execute(
+            "INSERT INTO history (tanggal, aksi, coin, jumlah) VALUES (?, ?, ?, ?)",
+            (
+                datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "ADD",
+                coin,
+                jumlah
+            )
+        )
+
         conn.commit()
         conn.close()
 
@@ -215,6 +228,33 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Format: /remove XRP 5"
         )
 
+async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT tanggal, aksi, coin, jumlah
+        FROM history
+        ORDER BY id DESC
+        LIMIT 10
+    """)
+
+    data = cursor.fetchall()
+
+    conn.close()
+
+    if not data:
+        await update.message.reply_text("Belum ada history.")
+        return
+
+    pesan = "📜 HISTORY\n\n"
+
+    for tanggal, aksi, coin, jumlah in data:
+        pesan += f"{tanggal}\n{aksi} {coin} {jumlah}\n\n"
+
+    await update.message.reply_text(pesan)
+
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
@@ -228,8 +268,9 @@ app.add_handler(CommandHandler("market", market))
 app.add_handler(CommandHandler("portfolio", portfolio))
 app.add_handler(CommandHandler("add", add))
 app.add_handler(CommandHandler("remove", remove))
+app.add_handler(CommandHandler("history", history))
 print("Bot sedang berjalan...")
 
 app.run_polling()
 # TEST NANO
- 
+
